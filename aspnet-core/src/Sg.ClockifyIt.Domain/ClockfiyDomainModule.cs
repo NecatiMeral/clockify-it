@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Sg.ClockifyIt.Localization;
 using Sg.ClockifyIt.MultiTenancy;
 using Sg.ClockifyIt.Workspaces;
 using Volo.Abp;
@@ -9,6 +10,8 @@ using Volo.Abp.BackgroundWorkers;
 using Volo.Abp.Caching;
 using Volo.Abp.Domain;
 using Volo.Abp.Emailing;
+using Volo.Abp.Localization;
+using Volo.Abp.Localization.ExceptionHandling;
 using Volo.Abp.Modularity;
 using Volo.Abp.MultiTenancy;
 using Volo.Abp.Threading;
@@ -21,6 +24,7 @@ namespace Sg.ClockifyIt;
     typeof(AbpEmailingModule),
     typeof(AbpCachingModule),
     typeof(AbpBackgroundWorkersModule),
+    typeof(AbpLocalizationModule),
     typeof(AbpAutoMapperModule)
 )]
 public class ClockifyItDomainModule : AbpModule
@@ -39,9 +43,12 @@ public class ClockifyItDomainModule : AbpModule
             options.IsEnabled = MultiTenancyConsts.IsEnabled;
         });
 
-#if DEBUG
         context.Services.Replace(ServiceDescriptor.Singleton<IEmailSender, NullEmailSender>());
-#endif
+
+        Configure<AbpExceptionLocalizationOptions>(options =>
+        {
+            options.MapCodeNamespace("Sq.ClockifyIt", typeof(ClockifyItResource));
+        });
 
         Configure<WorkspaceOptions>(configuration);
     }

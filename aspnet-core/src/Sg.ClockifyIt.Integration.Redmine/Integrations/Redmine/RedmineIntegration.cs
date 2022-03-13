@@ -10,7 +10,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Redmine.Net.Api;
 using Redmine.Net.Api.Async;
 using Redmine.Net.Api.Types;
-using Sg.ClockifyIt.Integrations;
 using Sg.ClockifyIt.Integrations.Completion;
 using Sg.ClockifyIt.Integrations.Dtos;
 using Sg.ClockifyIt.Integrations.Utils;
@@ -29,7 +28,7 @@ namespace Sg.ClockifyIt.Integrations.Redmine
             Logger = NullLogger<RedmineIntegration>.Instance;
         }
 
-        public async Task<IntegrationProcessingResult> ProcessAsync(IntegrationContext context)
+        public async Task<IntegrationResult> ProcessAsync(IntegrationContext context)
         {
             var options = context.Configuration.Get<RedmineIntegrationOptions>();
 
@@ -37,7 +36,7 @@ namespace Sg.ClockifyIt.Integrations.Redmine
             var issueIds = issueMap.GetDistinctReferencedIssueIds();
             var manager = GetRedmineManager(options);
 
-            var result = new IntegrationProcessingResult();
+            var result = new IntegrationResult();
 
             foreach (var issueId in issueIds)
             {
@@ -54,8 +53,9 @@ namespace Sg.ClockifyIt.Integrations.Redmine
 
                         result.MarkAsProcessed(entry.Id);
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
+                        result.MarkAsFailed(entry.Id, ex);
                     }
                 }
             }

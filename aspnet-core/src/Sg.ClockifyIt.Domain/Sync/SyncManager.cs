@@ -4,12 +4,15 @@ using System.Linq;
 using System.Threading.Tasks;
 using Clockify.Net;
 using Clockify.Net.Models.TimeEntries;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Sg.ClockifyIt.ClockifyIt;
 using Sg.ClockifyIt.Integrations;
 using Sg.ClockifyIt.Integrations.Dtos;
 using Sg.ClockifyIt.Sync.Users;
 using Sg.ClockifyIt.Workspaces;
+using Volo.Abp;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.ObjectMapping;
 
@@ -23,17 +26,21 @@ namespace Sg.ClockifyIt.Sync
         protected IObjectMapper ObjectMapper { get; }
         protected IntegrationManager IntegrationManager { get; }
 
+        public ILogger<SyncManager> Logger { get; set; }
+
         public SyncManager(IOptions<WorkspaceOptions> options,
-            IClockifyItClientFactory ClockifyItClientFactory,
+            IClockifyItClientFactory clockifyItClientFactory,
             IUserInfoProvider userInfoProvider,
             IObjectMapper objectMapper,
             IntegrationManager integrationManager)
         {
             Options = options.Value;
-            ClockifyItClientFactory = ClockifyItClientFactory;
+            ClockifyItClientFactory = clockifyItClientFactory;
             UserInfoProvider = userInfoProvider;
             ObjectMapper = objectMapper;
             IntegrationManager = integrationManager;
+
+            Logger = NullLogger<SyncManager>.Instance;
         }
 
         public virtual async Task SyncAsync()
@@ -49,10 +56,7 @@ namespace Sg.ClockifyIt.Sync
         protected virtual async Task SyncWorkspaceAsync(string workspaceName)
         {
             var configuration = Options.GetWorkspace(workspaceName);
-            if (!IsWorkspaceValid(configuration))
-            {
-                return;
-            }
+            AssertWorkspaceIsValid(configuration, workspaceName);
 
             var client = ClockifyItClientFactory.CreateClient(configuration);
             var user = await UserInfoProvider.GetCurrentUserInfoAsync(client, workspaceName);
@@ -78,7 +82,7 @@ namespace Sg.ClockifyIt.Sync
 
             var resultMap = await IntegrationManager.RunIntegrationsAsync(configuration, user, timeEntryDtos);
 
-            var processedTimeEntries = timeEntryDtos.Where(x => resultMap.ContainsKey(x.Id) && resultMap[x.Id]).ToList();
+            var processedTimeEntries = timeEntryDtos.Where(x => resultMap.ContainsKey(x.Id) && resultMap[x.Id].Succeed).ToList();
             foreach (var processedItem in processedTimeEntries)
             {
                 foreach (var action in resultMap.CompletionActions)
@@ -110,9 +114,14 @@ namespace Sg.ClockifyIt.Sync
             }
         }
 
-        protected virtual bool IsWorkspaceValid(WorkspaceConfiguration workspace)
+        protected virtual void AssertWorkspaceIsValid(WorkspaceConfiguration workspace, string workspaceName)
         {
-            return !workspace.ApiKey.IsNullOrWhiteSpace();
+            if (workspace.ApiKey.IsNullOrWhiteSpace())
+            {
+                throw new BusinessException(ClockifyItDomainErrorCodes.InvalidConfiguration, logLevel: LogLevel.Error)
+                    .WithData("WorkspaceName", workspaceName)
+                    .WithData("ConfigurationKey", nameof(WorkspaceConfiguration.ApiKey));
+            }
         }
     }
 }
