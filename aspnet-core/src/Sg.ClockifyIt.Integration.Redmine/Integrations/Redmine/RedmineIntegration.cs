@@ -60,11 +60,7 @@ namespace Sg.ClockifyIt.Integrations.Redmine
                 }
             }
 
-            result.AddAction(new RemoveBillableAction());
-            if (options.Tags.Any())
-            {
-                result.AddAction(new RemoveTagsAction(options.Tags.ToArray()));
-            }
+            result.ApplyResultByConvention(context);
 
             return result;
         }

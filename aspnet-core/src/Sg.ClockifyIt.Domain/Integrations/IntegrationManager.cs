@@ -26,7 +26,7 @@ namespace Sg.ClockifyIt.Integrations
             Options = options.Value;
         }
 
-        public virtual async Task<IntegrationResultAggregate> RunIntegrationsAsync(WorkspaceConfiguration workspace, UserInfo user, List<TimeEntryDto> timeEntries)
+        public virtual async Task<IntegrationResultAggregate> RunIntegrationsAsync(string workspaceId, WorkspaceConfiguration workspace, UserInfo user, List<TimeEntryDto> timeEntries)
         {
             using var scope = ServiceScopeFactory.CreateScope();
 
@@ -42,6 +42,7 @@ namespace Sg.ClockifyIt.Integrations
                     integrationConfiguration.GetSection("Args"),
                     user,
                     workspace,
+                    workspaceId,
                     timeEntries = new List<TimeEntryDto>(timeEntries)
                 );
 

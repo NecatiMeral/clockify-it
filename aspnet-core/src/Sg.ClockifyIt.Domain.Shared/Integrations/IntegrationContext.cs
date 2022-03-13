@@ -13,15 +13,22 @@ namespace Sg.ClockifyIt.Integrations
         public IConfiguration Configuration { get; }
         public UserInfo User { get; }
         public WorkspaceConfiguration Workspace { get; }
+        public string WorkspaceId { get; }
         public IReadOnlyList<TimeEntryDto> TimeEntries { get; }
 
-        public IntegrationContext(IServiceProvider serviceProvider, IConfiguration configuration, UserInfo user, WorkspaceConfiguration workspace, IReadOnlyList<TimeEntryDto> timeEntries)
+        public IntegrationContext(IServiceProvider serviceProvider,
+            IConfiguration configuration,
+            UserInfo user,
+            WorkspaceConfiguration workspace,
+            string workspaceId,
+            IReadOnlyList<TimeEntryDto> timeEntries)
         {
             ServiceProvider = serviceProvider;
             Configuration = configuration;
             User = user;
             Workspace = workspace;
             TimeEntries = timeEntries;
+            WorkspaceId = workspaceId;
         }
     }
 }
