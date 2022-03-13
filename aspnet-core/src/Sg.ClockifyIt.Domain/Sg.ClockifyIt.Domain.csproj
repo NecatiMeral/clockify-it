@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>Sg.ClockifyIt</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Sg.ClockifyIt.Domain.Shared\Sg.ClockifyIt.Domain.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Clockify.Net" Version="1.15.0" />
+    <PackageReference Include="Volo.Abp.Emailing" Version="$(AbpPackageVersion)" />
+    <PackageReference Include="Volo.Abp.Ddd.Domain" Version="$(AbpPackageVersion)" />
+    <PackageReference Include="Volo.Abp.Caching" Version="$(AbpPackageVersion)" />
+    <PackageReference Include="Volo.Abp.AutoMapper" Version="$(AbpPackageVersion)" />
+  </ItemGroup>
+
+</Project>
