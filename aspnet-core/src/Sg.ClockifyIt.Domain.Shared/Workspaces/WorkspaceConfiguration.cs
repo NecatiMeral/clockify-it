@@ -21,6 +21,9 @@ namespace Sg.ClockifyIt.Workspaces
         public WorkspaceConfiguration()
         {
             Integrations = Array.Empty<WorkspaceIntegrationReference>();
+            ApiUrl = "https://api.clockify.me/api/v1";
+            ExperimentalApiUrl = "https://api.clockify.me/api/";
+            ReportsApiUrl = "https://reports.clockify.me/v1";
         }
     }
 }
