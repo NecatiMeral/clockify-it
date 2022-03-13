@@ -1,0 +1,6 @@
+{
+  "culture": "en",
+  "texts": {
+    "Sg.ClockifyIt:00001": "Invalid Configuration. Please check `{ConfigurationKey}` in the workspace `{WorkspaceName}`."
+  }
+}
