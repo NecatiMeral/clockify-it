@@ -26,7 +26,7 @@ namespace Sg.ClockifyIt.Sync.Users
             );
         }
 
-        protected DistributedCacheEntryOptions GetDistributedCacheEntryOptions()
+        protected virtual DistributedCacheEntryOptions GetDistributedCacheEntryOptions()
         {
             return new DistributedCacheEntryOptions
             {
@@ -34,7 +34,7 @@ namespace Sg.ClockifyIt.Sync.Users
             };
         }
 
-        private async Task<UserInfo> GetCurrentUserInfoFromApiAsync(ClockifyClient client)
+        protected virtual async Task<UserInfo> GetCurrentUserInfoFromApiAsync(ClockifyClient client)
         {
             var user = await client.GetCurrentUserAsync();
 

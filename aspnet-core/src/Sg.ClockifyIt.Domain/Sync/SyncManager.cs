@@ -4,12 +4,16 @@ using System.Linq;
 using System.Threading.Tasks;
 using Clockify.Net;
 using Clockify.Net.Models.TimeEntries;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Sg.ClockifyIt.Clockify.Tags;
 using Sg.ClockifyIt.ClockifyIt;
 using Sg.ClockifyIt.Integrations;
 using Sg.ClockifyIt.Integrations.Dtos;
 using Sg.ClockifyIt.Sync.Users;
 using Sg.ClockifyIt.Workspaces;
+using Volo.Abp;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.ObjectMapping;
 
@@ -21,19 +25,26 @@ namespace Sg.ClockifyIt.Sync
         protected IClockifyItClientFactory ClockifyItClientFactory { get; }
         protected IUserInfoProvider UserInfoProvider { get; }
         protected IObjectMapper ObjectMapper { get; }
+        protected IClockifyTagProvider ClockifyTagProvider { get; }
         protected IntegrationManager IntegrationManager { get; }
 
+        public ILogger<SyncManager> Logger { get; set; }
+
         public SyncManager(IOptions<WorkspaceOptions> options,
-            IClockifyItClientFactory ClockifyItClientFactory,
+            IClockifyItClientFactory clockifyItClientFactory,
             IUserInfoProvider userInfoProvider,
             IObjectMapper objectMapper,
+            IClockifyTagProvider clockifyTagProvider,
             IntegrationManager integrationManager)
         {
             Options = options.Value;
-            ClockifyItClientFactory = ClockifyItClientFactory;
+            ClockifyItClientFactory = clockifyItClientFactory;
             UserInfoProvider = userInfoProvider;
             ObjectMapper = objectMapper;
+            ClockifyTagProvider = clockifyTagProvider;
             IntegrationManager = integrationManager;
+
+            Logger = NullLogger<SyncManager>.Instance;
         }
 
         public virtual async Task SyncAsync()
@@ -49,10 +60,7 @@ namespace Sg.ClockifyIt.Sync
         protected virtual async Task SyncWorkspaceAsync(string workspaceName)
         {
             var configuration = Options.GetWorkspace(workspaceName);
-            if (!IsWorkspaceValid(configuration))
-            {
-                return;
-            }
+            AssertWorkspaceIsValid(configuration, workspaceName);
 
             var client = ClockifyItClientFactory.CreateClient(configuration);
             var user = await UserInfoProvider.GetCurrentUserInfoAsync(client, workspaceName);
@@ -76,9 +84,10 @@ namespace Sg.ClockifyIt.Sync
 
             var timeEntryDtos = ObjectMapper.Map<List<HydratedTimeEntryDtoImpl>, List<TimeEntryDto>>(timeEntries.Data);
 
-            var resultMap = await IntegrationManager.RunIntegrationsAsync(configuration, user, timeEntryDtos);
+            var resultMap = await IntegrationManager.RunIntegrationsAsync(workspaceId, configuration, user, timeEntryDtos);
 
-            var processedTimeEntries = timeEntryDtos.Where(x => resultMap.ContainsKey(x.Id) && resultMap[x.Id]).ToList();
+            var processedTimeEntries = timeEntryDtos.Where(x => resultMap.ContainsKey(x.Id) && resultMap[x.Id].Succeed).ToList();
+
             foreach (var processedItem in processedTimeEntries)
             {
                 foreach (var action in resultMap.CompletionActions)
@@ -87,7 +96,33 @@ namespace Sg.ClockifyIt.Sync
                 }
             }
 
+            await PostProcessTimeEntriesAsync(client, user, processedTimeEntries, workspaceId);
             await MarkTimeEntriesAsBilledAsync(client, user, processedTimeEntries, workspaceId);
+        }
+
+        protected virtual async Task PostProcessTimeEntriesAsync(ClockifyClient client, UserInfo user, List<TimeEntryDto> timeEntries, string workspaceId)
+        {
+            var tagsWithoutId = timeEntries.SelectMany(x => x.Tags)
+                .Where(x => x.Id.IsNullOrEmpty())
+                .ToArray();
+
+            if (!tagsWithoutId.Any())
+            {
+                return;
+            }
+
+            var distinctTagNames = tagsWithoutId.Select(x => x.Name).Distinct().ToArray();
+
+            foreach (var missingTagName in distinctTagNames)
+            {
+                var tag = await ClockifyTagProvider.GetOrCreateTagByName(client, workspaceId, missingTagName);
+
+                var currentTagsWithMissingId = tagsWithoutId.Where(x => x.Name == missingTagName).ToList();
+                currentTagsWithMissingId.ForEach(x =>
+                {
+                    x.Id = tag.Id;
+                });
+            }
         }
 
         protected virtual async Task MarkTimeEntriesAsBilledAsync(ClockifyClient client, UserInfo user, List<TimeEntryDto> timeEntries, string workspaceId)
@@ -110,9 +145,14 @@ namespace Sg.ClockifyIt.Sync
             }
         }
 
-        protected virtual bool IsWorkspaceValid(WorkspaceConfiguration workspace)
+        protected virtual void AssertWorkspaceIsValid(WorkspaceConfiguration workspace, string workspaceName)
         {
-            return !workspace.ApiKey.IsNullOrWhiteSpace();
+            if (workspace.ApiKey.IsNullOrWhiteSpace())
+            {
+                throw new BusinessException(ClockifyItDomainErrorCodes.InvalidConfiguration, logLevel: LogLevel.Error)
+                    .WithData("WorkspaceName", workspaceName)
+                    .WithData("ConfigurationKey", nameof(WorkspaceConfiguration.ApiKey));
+            }
         }
     }
 }

@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Sg.ClockifyIt.Integrations;
 using Sg.ClockifyIt.Integrations.Dtos;
 using Sg.ClockifyIt.Sync.Users;
 using Sg.ClockifyIt.Workspaces;
@@ -27,11 +26,11 @@ namespace Sg.ClockifyIt.Integrations
             Options = options.Value;
         }
 
-        public virtual async Task<IntegrationProcessingResult> RunIntegrationsAsync(WorkspaceConfiguration workspace, UserInfo user, List<TimeEntryDto> timeEntries)
+        public virtual async Task<IntegrationResultAggregate> RunIntegrationsAsync(string workspaceId, WorkspaceConfiguration workspace, UserInfo user, List<TimeEntryDto> timeEntries)
         {
             using var scope = ServiceScopeFactory.CreateScope();
 
-            var result = new IntegrationProcessingResult();
+            var result = new IntegrationResultAggregate();
             foreach (var integrationReference in workspace.Integrations)
             {
                 var integrationConfiguration = GetIntegrationConfiguration(integrationReference.Name);
@@ -43,6 +42,7 @@ namespace Sg.ClockifyIt.Integrations
                     integrationConfiguration.GetSection("Args"),
                     user,
                     workspace,
+                    workspaceId,
                     timeEntries = new List<TimeEntryDto>(timeEntries)
                 );
 
@@ -51,10 +51,7 @@ namespace Sg.ClockifyIt.Integrations
                 result.AddActions(integrationResult.CompletionActions);
                 foreach (var item in integrationResult)
                 {
-                    if (!result.TryAdd(item.Key, item.Value))
-                    {
-                        result[item.Key] &= item.Value;
-                    }
+                    result.Set(item.Key, item.Value);
                 }
             }
             return result;

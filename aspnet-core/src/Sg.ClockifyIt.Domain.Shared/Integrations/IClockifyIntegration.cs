@@ -5,6 +5,6 @@ namespace Sg.ClockifyIt.Integrations
 {
     public interface IClockifyItIntegration
     {
-        Task<IntegrationProcessingResult> ProcessAsync(IntegrationContext context);
+        Task<IntegrationResult> ProcessAsync(IntegrationContext context);
     }
 }

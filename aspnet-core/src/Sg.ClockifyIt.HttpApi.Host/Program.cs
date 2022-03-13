@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
@@ -10,7 +11,7 @@ namespace Sg.ClockifyIt;
 
 public class Program
 {
-    public async static Task<int> Main(string[] args)
+    public static async Task<int> Main(string[] args)
     {
         Log.Logger = new LoggerConfiguration()
 #if DEBUG
@@ -21,7 +22,7 @@ public class Program
             .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
             .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
             .Enrich.FromLogContext()
-            .WriteTo.Async(c => c.File("Logs/logs.txt"))
+            .WriteTo.Async(c => c.File("Logs/logs.log", retainedFileCountLimit: 14, rollingInterval: RollingInterval.Day))
 #if DEBUG
             .WriteTo.Async(c => c.Console())
 #endif
@@ -32,6 +33,10 @@ public class Program
             Log.Information("Starting Sg.ClockifyIt.HttpApi.Host.");
             var builder = WebApplication.CreateBuilder(args);
             builder.Host.AddAppSettingsSecretsJson()
+                .ConfigureAppConfiguration(builder =>
+                {
+                    builder.AddUserSecrets<Program>();
+                })
                 .UseAutofac()
                 .UseSerilog();
             await builder.AddApplicationAsync<ClockifyItHttpApiHostModule>();
