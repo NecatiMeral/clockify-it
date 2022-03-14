@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>Sg.ClockifyIt</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.TeamFoundationServer.Client" Version="16.170.0" />
+    <PackageReference Include="redmine-api" Version="4.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Sg.ClockifyIt.Domain.Shared\Sg.ClockifyIt.Domain.Shared.csproj" />
+    <ProjectReference Include="..\Sg.ClockifyIt.Integration.Redmine\Sg.ClockifyIt.Integration.Redmine.csproj" />
+  </ItemGroup>
+
+</Project>
