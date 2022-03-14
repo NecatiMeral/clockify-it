@@ -23,10 +23,8 @@ public class Program
             .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
             .Enrich.FromLogContext()
             .WriteTo.Async(c => c.File("Logs/logs.log", retainedFileCountLimit: 14, rollingInterval: RollingInterval.Day))
-#if DEBUG
             .WriteTo.Async(c => c.Console())
-#endif
-            .CreateLogger();
+            .CreateBootstrapLogger();
 
         try
         {
@@ -38,7 +36,13 @@ public class Program
                     builder.AddUserSecrets<Program>();
                 })
                 .UseAutofac()
-                .UseSerilog();
+                .UseSerilog((context, configuration) =>
+                {
+                    configuration
+                        .WriteTo.Async(x => x.Console())
+                        .ReadFrom.Configuration(context.Configuration);
+                });
+
             await builder.AddApplicationAsync<ClockifyItHttpApiHostModule>();
             var app = builder.Build();
             await app.InitializeApplicationAsync();

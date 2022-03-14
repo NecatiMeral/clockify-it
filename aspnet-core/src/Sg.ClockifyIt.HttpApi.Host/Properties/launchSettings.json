@@ -1,6 +1,6 @@
 {
   "iisSettings": {
-    "windowsAuthentication": false, 
+    "windowsAuthentication": false,
     "anonymousAuthentication": true,
     "iisExpress": {
       "applicationUrl": "https://localhost:44362",
@@ -10,8 +10,6 @@
   "profiles": {
     "Sg.ClockifyIt.HttpApi.Host": {
       "commandName": "Project",
-      "launchBrowser": false,
-      "applicationUrl": "https://localhost:44362",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
