@@ -51,6 +51,12 @@ namespace Sg.ClockifyIt.Sync
         {
             var workspaces = Options.Workspaces.Keys;
 
+            if (!workspaces.Any())
+            {
+                Logger.LogWarning("No workspaces configured. Please check your configuration.");
+                return;
+            }
+
             foreach (var workspace in workspaces)
             {
                 await SyncWorkspaceAsync(workspace);
@@ -76,13 +82,16 @@ namespace Sg.ClockifyIt.Sync
             var fetchEnd = DateTimeOffset.Now.Add(-configuration.Delay);
             var fetchStart = fetchEnd - configuration.FetchRange;
 
-            var timeEntries = await client.FindAllHydratedTimeEntriesForUserAsync(workspaceId, user.Id, start: fetchStart, end: fetchEnd);
-            if (timeEntries.Data.Count == 0)
+            var timeEntriesResponse = await client.FindAllHydratedTimeEntriesForUserAsync(workspaceId, user.Id, start: fetchStart, end: fetchEnd);
+
+            // Filtering out any entries which don't have a defined start and end stamp
+            var timeEntries = timeEntriesResponse.Data.Where(x => !x.TimeInterval.Duration.IsNullOrEmpty()).ToList();
+            if (timeEntries.Count == 0)
             {
                 return;
             }
 
-            var timeEntryDtos = ObjectMapper.Map<List<HydratedTimeEntryDtoImpl>, List<TimeEntryDto>>(timeEntries.Data);
+            var timeEntryDtos = ObjectMapper.Map<List<HydratedTimeEntryDtoImpl>, List<TimeEntryDto>>(timeEntriesResponse.Data);
 
             var resultMap = await IntegrationManager.RunIntegrationsAsync(workspaceId, configuration, user, timeEntryDtos);
 
