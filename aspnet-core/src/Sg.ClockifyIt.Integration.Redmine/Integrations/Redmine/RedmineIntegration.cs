@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,7 +9,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Redmine.Net.Api;
 using Redmine.Net.Api.Async;
 using Redmine.Net.Api.Types;
-using Sg.ClockifyIt.Integrations.Completion;
 using Sg.ClockifyIt.Integrations.Dtos;
 using Sg.ClockifyIt.Integrations.Utils;
 using Volo.Abp.DependencyInjection;
@@ -43,19 +41,33 @@ namespace Sg.ClockifyIt.Integrations.Redmine
                 var timeEntryIds = issueMap.GetTimeEntriesByIssueId(issueId);
                 var timeEntries = context.TimeEntries.Where(x => timeEntryIds.Contains(x.Id)).ToArray();
 
-                var issue = (await GetIssuesAsync(manager, new[] { issueId })).FirstOrDefault();
-
-                foreach (var entry in timeEntries)
+                try
                 {
-                    try
-                    {
-                        await CreateTimeBookingAsync(manager, issue, entry);
+                    var issue = await GetIssueAsync(manager, issueId);
 
-                        result.MarkAsProcessed(entry.Id);
-                    }
-                    catch (Exception ex)
+                    foreach (var entry in timeEntries)
                     {
-                        result.MarkAsFailed(entry.Id, ex);
+                        try
+                        {
+                            await CreateTimeBookingAsync(manager, issue, entry);
+
+                            result.MarkAsProcessed(entry.Id);
+                        }
+                        catch (Exception individualEntryException)
+                        {
+                            // We failed at processing a specific entry, set it in a failed state
+                            // and attempt to process other entries referencing the current issue.
+                            result.MarkAsFailed(entry.Id, individualEntryException);
+                        }
+                    }
+                }
+                catch (Exception workItemException)
+                {
+                    // We haven't even come to the point where we process the indivudual items; 
+                    // set all entries in a failed state.
+                    foreach (var timeEntry in timeEntries)
+                    {
+                        result.MarkAsFailed(timeEntry.Id, workItemException);
                     }
                 }
             }
@@ -65,9 +77,9 @@ namespace Sg.ClockifyIt.Integrations.Redmine
             return result;
         }
 
-        protected TimeEntryToIssueMap ExtractIssueMap(IntegrationContext context, RedmineIntegrationOptions options)
+        protected TimeEntryMap<int> ExtractIssueMap(IntegrationContext context, RedmineIntegrationOptions options)
         {
-            var issueMap = new TimeEntryToIssueMap();
+            var issueMap = new TimeEntryMap<int>();
             foreach (var timeEntry in context.TimeEntries)
             {
                 if (!timeEntry.Billable)
@@ -82,20 +94,20 @@ namespace Sg.ClockifyIt.Integrations.Redmine
                     continue;
                 }
 
-                var redmineIssueIds = TaskExtractor.ExtractTaskFromDescription(timeEntry.Description, options.IssueIdExpression);
-                if (!redmineIssueIds.Any())
+                var workItemIds = TaskExtractor.ExtractTaskFromDescription(timeEntry.Description, options.IssueIdExpression);
+                if (!workItemIds.Any())
                 {
                     Logger.LogDebug("Skipping time entry `{TimeEntryId}` because it doesn't reference an redmine issue.", timeEntry.Id);
                     continue;
                 }
 
-                if (redmineIssueIds.Count > 1)
+                if (workItemIds.Count > 1)
                 {
                     Logger.LogDebug("Skipping time entry `{TimeEntryId}` because it references multiple redmine issues, which isn't supported.", timeEntry.Id);
                     continue;
                 }
 
-                issueMap.Map(timeEntry.Id, redmineIssueIds);
+                issueMap.Map(timeEntry.Id, workItemIds);
             }
             return issueMap;
         }
@@ -105,12 +117,9 @@ namespace Sg.ClockifyIt.Integrations.Redmine
             return new RedmineManager(options.Host, options.ApiKey, verifyServerCert: options.VerifyServerCert);
         }
 
-        protected virtual async Task<List<Issue>> GetIssuesAsync(RedmineManager manager, string[] ids)
+        protected virtual async Task<Issue> GetIssueAsync(RedmineManager manager, int id)
         {
-            return await manager.GetObjectsAsync<Issue>(new NameValueCollection
-            {
-                { RedmineKeys.ISSUE_ID, string.Join(",", ids) }
-            });
+            return await manager.GetObjectAsync<Issue>(id.ToString(), new NameValueCollection());
         }
 
         protected virtual async Task CreateTimeBookingAsync(RedmineManager manager, Issue issue, TimeEntryDto timeEntry)

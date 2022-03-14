@@ -15,13 +15,17 @@ namespace Sg.ClockifyIt.Integrations.Utils
             {
                 result.AddAction(new RemoveTagsAction(options.Tags.ToArray()));
             }
-            if (options.ProcessedTags.Any())
+
+            var succeedEntryIds = result.Where(x => x.Value.Succeed).Select(x => x.Key).ToArray();
+            if (options.ProcessedTags.Any() && succeedEntryIds.Any())
             {
-                result.AddAction(new AddTagsAction(options.ProcessedTags.ToArray(), integrationContext.WorkspaceId));
+                result.AddAction(new AddTagsAction(options.ProcessedTags.ToArray(), integrationContext.WorkspaceId, succeedEntryIds));
             }
-            if (options.ErrorTags.Any())
+
+            var failedEntryIds = result.Where(x => !x.Value.Succeed).Select(x => x.Key).ToArray();
+            if (options.ErrorTags.Any() && failedEntryIds.Any())
             {
-                result.AddAction(new AddTagsAction(options.ErrorTags.ToArray(), integrationContext.WorkspaceId));
+                result.AddAction(new AddTagsAction(options.ErrorTags.ToArray(), integrationContext.WorkspaceId, failedEntryIds));
             }
         }
     }
