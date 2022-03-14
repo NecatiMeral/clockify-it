@@ -1,12 +1,20 @@
-# ClockifyIt-it
+# Clockify-it
 
-Clockify-It is a customizable and extensible bridge between clockify and other time tracking / management tools written dotnet.
+Clockify-it is a customizable and extensible bridge between clockify and other time tracking / management tools written dotnet.
+
+## State of the project
+
+Since this is just a side-project, I'll work on features and fixes when I have spare time.
+
+Don't expect the application to be fully tested. **It is not considered to be production ready** even I'm aiming to use it personally.
 
 ## Roadmap
 
 Please take a loot at the open issues.
 
 ## How to Contribute
+
+Feel free to contribute. You can file an issue first to discuss about the changes to be made.
 
 1. Fork it (https://github.com/NecatiMeral/clockify-it/fork)
 2. Create your feature branch (`git checkout -b feature/fooBar`)
