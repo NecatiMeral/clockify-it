@@ -25,6 +25,7 @@ COPY ["aspnet-core/src/Sg.ClockifyIt.HttpApi/*.csproj", "aspnet-core/src/Sg.Cloc
 COPY ["aspnet-core/src/Sg.ClockifyIt.HttpApi.Client/*.csproj", "aspnet-core/src/Sg.ClockifyIt.HttpApi.Client/"]
 COPY ["aspnet-core/src/Sg.ClockifyIt.HttpApi.Host/*.csproj", "aspnet-core/src/Sg.ClockifyIt.HttpApi.Host/"]
 COPY ["aspnet-core/src/Sg.ClockifyIt.Integration.Redmine/*.csproj", "aspnet-core/src/Sg.ClockifyIt.Integration.Redmine/"]
+COPY ["aspnet-core/src/Sg.ClockifyIt.Integration.RedmineOverDevOps/*.csproj", "aspnet-core/src/Sg.ClockifyIt.Integration.RedmineOverDevOps/"]
 COPY ["aspnet-core/test/Sg.ClockifyIt.Application.Tests/*.csproj", "aspnet-core/test/Sg.ClockifyIt.Application.Tests/"]
 COPY ["aspnet-core/test/Sg.ClockifyIt.Domain.Tests/*.csproj", "aspnet-core/test/Sg.ClockifyIt.Domain.Tests/"]
 COPY ["aspnet-core/test/Sg.ClockifyIt.EntityFrameworkCore.Tests/*.csproj", "aspnet-core/test/Sg.ClockifyIt.EntityFrameworkCore.Tests/"]

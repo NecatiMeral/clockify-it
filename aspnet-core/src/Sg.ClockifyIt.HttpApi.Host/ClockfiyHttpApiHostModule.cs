@@ -10,14 +10,13 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi.Models;
 using Sg.ClockifyIt.EntityFrameworkCore;
 using Sg.ClockifyIt.MultiTenancy;
 using StackExchange.Redis;
-using Microsoft.OpenApi.Models;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc.UI.MultiTenancy;
-using Volo.Abp.AspNetCore.Mvc.UI.Theme.Shared;
 using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
 using Volo.Abp.Caching;
@@ -38,7 +37,8 @@ namespace Sg.ClockifyIt;
     typeof(ClockifyItEntityFrameworkCoreModule),
     typeof(AbpAspNetCoreSerilogModule),
     typeof(AbpSwashbuckleModule),
-    typeof(ClockifyItRedmineIntegrationModule)
+    typeof(ClockifyItRedmineIntegrationModule),
+    typeof(ClockifyItRedmineOverDevOpsIntegrationModule)
 )]
 public class ClockifyItHttpApiHostModule : AbpModule
 {

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <Import Project="..\..\common.props" />
 
@@ -30,6 +30,7 @@
     <ProjectReference Include="..\Sg.ClockifyIt.Application\Sg.ClockifyIt.Application.csproj" />
     <ProjectReference Include="..\Sg.ClockifyIt.EntityFrameworkCore\Sg.ClockifyIt.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\Sg.ClockifyIt.HttpApi\Sg.ClockifyIt.HttpApi.csproj" />
+    <ProjectReference Include="..\Sg.ClockifyIt.Integration.RedmineOverDevOps\Sg.ClockifyIt.Integration.RedmineOverDevOps.csproj" />
     <ProjectReference Include="..\Sg.ClockifyIt.Integration.Redmine\Sg.ClockifyIt.Integration.Redmine.csproj" />
   </ItemGroup>
 
@@ -39,7 +40,5 @@
     <EmbeddedResource Remove="Logs\**" />
     <None Remove="Logs\**" />
   </ItemGroup>
-
-  <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>
 
 </Project>
