@@ -12,10 +12,15 @@ namespace Sg.ClockifyIt.Integrations.Redmine
 
         public string IssueIdExpression { get; set; }
 
+        public virtual int? DefaultActivityId { get; set; }
+
+        public ActivityTagDictionary Activities { get; set; }
+
         public RedmineIntegrationOptions()
         {
             VerifyServerCert = true;
             IssueIdExpression = "#([0-9]+)";
+            Activities = new ActivityTagDictionary();
         }
     }
 }

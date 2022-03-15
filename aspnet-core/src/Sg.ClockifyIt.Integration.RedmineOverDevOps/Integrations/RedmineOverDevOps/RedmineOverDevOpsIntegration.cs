@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -59,7 +60,9 @@ namespace Sg.ClockifyIt.Integrations.RedmineOverDevOps
                     {
                         try
                         {
-                            await CreateTimeBookingAsync(manager, issue, timeEntry);
+                            var activityId = GetActivityId(options.Redmine.Activities, timeEntry.Tags);
+
+                            await CreateTimeBookingAsync(manager, issue, timeEntry, activityId);
 
                             result.MarkAsProcessed(timeEntry.Id);
                         }
@@ -143,7 +146,7 @@ namespace Sg.ClockifyIt.Integrations.RedmineOverDevOps
                 }
 
                 var entryTagNames = timeEntry.GetTagNames();
-                if (options.Tags.Any() && !options.Tags.Any(x => entryTagNames.Contains(x)))
+                if (options.Tags.Any() && !options.Tags.All(x => x.MatchesTags(entryTagNames)))
                 {
                     Logger.LogDebug("Skipping time entry `{TimeEntryId}` because of tag mismatch.", timeEntry.Id);
                     continue;
@@ -177,7 +180,20 @@ namespace Sg.ClockifyIt.Integrations.RedmineOverDevOps
             return await manager.GetObjectAsync<Issue>(id.ToString(), new NameValueCollection());
         }
 
-        protected virtual async Task CreateTimeBookingAsync(RedmineManager manager, Issue issue, TimeEntryDto timeEntry)
+        protected virtual int GetActivityId(ActivityTagDictionary activities, List<TagDto> tags)
+        {
+            foreach (var tag in tags)
+            {
+                if (activities.TryGetValue(tag.Name, out var activityId))
+                {
+                    return activityId;
+                }
+            }
+
+            return activities.Default;
+        }
+
+        protected virtual async Task CreateTimeBookingAsync(RedmineManager manager, Issue issue, TimeEntryDto timeEntry, int activityId)
         {
             var hours = XmlConvert.ToTimeSpan(timeEntry.TimeInterval.Duration);
             var booking = new TimeEntry
@@ -185,9 +201,17 @@ namespace Sg.ClockifyIt.Integrations.RedmineOverDevOps
                 Issue = IdentifiableName.Create<IdentifiableName>(issue.Id),
                 Hours = Convert.ToDecimal(hours.TotalHours),
                 SpentOn = timeEntry.TimeInterval.Start.Value.Date,
-                Comments = timeEntry.Description,
-                Activity = IdentifiableName.Create<IdentifiableName>(9)
+                Comments = timeEntry.Description
             };
+
+            if (activityId > 0)
+            {
+                booking.Activity = IdentifiableName.Create<IdentifiableName>(activityId);
+            }
+            else
+            {
+                Logger.LogInformation("Attempting to create time entry without activity since no configured activity matched the current time entry.");
+            }
 
             await manager.CreateObjectAsync(booking);
         }

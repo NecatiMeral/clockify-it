@@ -13,7 +13,7 @@ namespace Sg.ClockifyIt.Integrations.Utils
             result.AddAction(new RemoveBillableAction());
             if (options.Tags.Any())
             {
-                result.AddAction(new RemoveTagsAction(options.Tags.ToArray()));
+                result.AddAction(new RemoveTagsAction(options.Tags.SelectMany(x => x).ToArray()));
             }
 
             var succeedEntryIds = result.Where(x => x.Value.Succeed).Select(x => x.Key).ToArray();

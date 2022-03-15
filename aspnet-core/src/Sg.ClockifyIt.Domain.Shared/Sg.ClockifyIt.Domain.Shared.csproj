@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="Volo.Abp.Validation" Version="$(AbpPackageVersion)" />
+    <PackageReference Include="Volo.Abp.Caching" Version="$(AbpPackageVersion)" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,4 +1,5 @@
 ﻿using Sg.ClockifyIt.Localization;
+using Volo.Abp.Caching;
 using Volo.Abp.Localization;
 using Volo.Abp.Localization.ExceptionHandling;
 using Volo.Abp.Modularity;
@@ -9,7 +10,8 @@ using Volo.Abp.VirtualFileSystem;
 namespace Sg.ClockifyIt;
 
 [DependsOn(
-    typeof(AbpValidationModule)
+    typeof(AbpValidationModule),
+    typeof(AbpCachingModule)
     )]
 public class ClockifyItDomainSharedModule : AbpModule
 {
