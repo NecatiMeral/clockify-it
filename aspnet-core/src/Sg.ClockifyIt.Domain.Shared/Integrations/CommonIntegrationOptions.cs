@@ -4,7 +4,7 @@ namespace Sg.ClockifyIt.Integrations
 {
     public class CommonIntegrationOptions
     {
-        public List<string> Tags { get; set; }
+        public List<TagList> Tags { get; set; }
 
         public List<string> ProcessedTags { get; set; }
 
@@ -12,7 +12,7 @@ namespace Sg.ClockifyIt.Integrations
 
         public CommonIntegrationOptions()
         {
-            Tags = new List<string>();
+            Tags = new List<TagList>();
             ProcessedTags = new List<string>();
             ErrorTags = new List<string>();
         }
