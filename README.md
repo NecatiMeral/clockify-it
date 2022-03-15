@@ -11,6 +11,7 @@ Don't expect the application to be fully tested. **It is not considered to be pr
 ## Documentation
 
 - [Configuration](docs/configuration.md)
+- [Architecture](docs/architecture.md)
 - Integrations
   - [Redmine](docs/integrations/redmine-0.md)
   - [Azure DevOps over Redmine](docs/integrations/redmineoverdevops-0.md)
