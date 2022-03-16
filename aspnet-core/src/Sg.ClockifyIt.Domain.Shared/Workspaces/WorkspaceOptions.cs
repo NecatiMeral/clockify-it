@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace Sg.ClockifyIt.Workspaces
@@ -9,9 +8,15 @@ namespace Sg.ClockifyIt.Workspaces
     {
         public WorkspaceConfigurationDictionary Workspaces { get; set; }
 
+        public TimeSpan Interval { get; set; }
+
+        public bool Once { get; set; }
+
         public WorkspaceOptions()
         {
             Workspaces = new WorkspaceConfigurationDictionary();
+            Interval = TimeSpan.FromMinutes(5);
+            Once = false;
         }
 
         public WorkspaceConfiguration GetWorkspace(string workspaceName = null)

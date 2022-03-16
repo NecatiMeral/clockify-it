@@ -7,7 +7,7 @@ using Microsoft.VisualStudio.Services.WebApi;
 
 namespace Sg.ClockifyIt.Integrations.RedmineOverDevOps
 {
-    public class DevOpsClient
+    public class DevOpsClient : IDisposable
     {
         VssBasicCredential _credentials;
         private VssConnection _connection;
@@ -38,6 +38,11 @@ namespace Sg.ClockifyIt.Integrations.RedmineOverDevOps
             var witClient = await connection.GetClientAsync<WorkItemTrackingHttpClient>();
 
             return await witClient.GetWorkItemAsync(id, expand: WorkItemExpand.Relations);
+        }
+
+        public void Dispose()
+        {
+            _connection?.Dispose();
         }
     }
 }

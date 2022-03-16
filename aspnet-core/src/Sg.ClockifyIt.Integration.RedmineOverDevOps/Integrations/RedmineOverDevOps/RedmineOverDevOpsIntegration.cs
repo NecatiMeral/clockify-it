@@ -40,7 +40,7 @@ namespace Sg.ClockifyIt.Integrations.RedmineOverDevOps
             var issueMap = ExtractIssueMap(context, options);
             var workItemIds = issueMap.GetDistinctReferencedIssueIds();
             var devOpsClientFactory = context.ServiceProvider.GetRequiredService<DevOpsClientFactory>();
-            var devOpsClient = devOpsClientFactory.Create(options.Host, options.PAT);
+            using var devOpsClient = devOpsClientFactory.Create(options.Host, options.PAT);
             var manager = GetRedmineManager(options);
 
             var result = new IntegrationResult();

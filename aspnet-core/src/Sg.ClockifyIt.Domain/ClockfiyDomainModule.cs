@@ -50,7 +50,7 @@ public class ClockifyItDomainModule : AbpModule
             options.MapCodeNamespace("Sq.ClockifyIt", typeof(ClockifyItResource));
         });
 
-        Configure<WorkspaceOptions>(configuration);
+        Configure<WorkspaceOptions>(configuration.GetSection(ClockifyConfigurationConsts.ClockifyConfigurationSectionName));
     }
 
     public override void OnApplicationInitialization(ApplicationInitializationContext context)

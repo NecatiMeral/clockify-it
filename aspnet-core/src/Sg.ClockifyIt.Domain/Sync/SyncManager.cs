@@ -57,9 +57,17 @@ namespace Sg.ClockifyIt.Sync
                 return;
             }
 
-            foreach (var workspace in workspaces)
+            foreach (var workspaceName in workspaces)
             {
-                await SyncWorkspaceAsync(workspace);
+                Logger.LogInformation("Start processing workspace `{workspaceName}`", workspaceName);
+                try
+                {
+                    await SyncWorkspaceAsync(workspaceName);
+                }
+                finally
+                {
+                    Logger.LogInformation("Completed processing workspace `{workspaceName}`", workspaceName);
+                }
             }
         }
 
@@ -84,10 +92,11 @@ namespace Sg.ClockifyIt.Sync
 
             var timeEntriesResponse = await client.FindAllHydratedTimeEntriesForUserAsync(workspaceId, user.Id, start: fetchStart, end: fetchEnd);
 
-            // Filtering out any entries which don't have a defined start and end stamp
-            var timeEntries = timeEntriesResponse.Data.Where(x => !x.TimeInterval.Duration.IsNullOrEmpty()).ToList();
+            // Filtering out any entries which don't have a defined start and end stamp and which are inside the delay interval
+            var timeEntries = timeEntriesResponse.Data.Where(x => !x.TimeInterval.Duration.IsNullOrEmpty() && x.TimeInterval.End < fetchEnd).ToList();
             if (timeEntries.Count == 0)
             {
+                Logger.LogInformation("Nothing to do");
                 return;
             }
 
@@ -95,7 +104,7 @@ namespace Sg.ClockifyIt.Sync
 
             var resultMap = await IntegrationManager.RunIntegrationsAsync(workspaceId, configuration, user, timeEntryDtos);
 
-            var processedTimeEntries = timeEntryDtos.Where(x => resultMap.ContainsKey(x.Id) && resultMap[x.Id].Succeed).ToList();
+            var processedTimeEntries = timeEntryDtos.Where(x => resultMap.ContainsKey(x.Id)).ToList();
 
             foreach (var processedItem in processedTimeEntries)
             {
@@ -138,6 +147,7 @@ namespace Sg.ClockifyIt.Sync
         {
             foreach (var timeEntry in timeEntries)
             {
+                Logger.LogInformation("Updating time entry `{Description}` ({Start} - {End})", timeEntry.Description, timeEntry.TimeInterval.Start, timeEntry.TimeInterval.End);
                 await client.UpdateTimeEntryAsync(workspaceId,
                     timeEntry.Id,
                     new UpdateTimeEntryRequest

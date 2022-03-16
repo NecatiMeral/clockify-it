@@ -10,33 +10,24 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.OpenApi.Models;
-using Sg.ClockifyIt.EntityFrameworkCore;
 using Sg.ClockifyIt.MultiTenancy;
 using StackExchange.Redis;
 using Volo.Abp;
-using Volo.Abp.AspNetCore.Mvc;
-using Volo.Abp.AspNetCore.Mvc.UI.MultiTenancy;
 using Volo.Abp.AspNetCore.Serilog;
 using Volo.Abp.Autofac;
 using Volo.Abp.Caching;
 using Volo.Abp.Caching.StackExchangeRedis;
 using Volo.Abp.Localization;
 using Volo.Abp.Modularity;
-using Volo.Abp.Swashbuckle;
 using Volo.Abp.VirtualFileSystem;
 
 namespace Sg.ClockifyIt;
 
 [DependsOn(
-    typeof(ClockifyItHttpApiModule),
     typeof(AbpAutofacModule),
     typeof(AbpCachingStackExchangeRedisModule),
-    typeof(AbpAspNetCoreMvcUiMultiTenancyModule),
-    typeof(ClockifyItApplicationModule),
-    typeof(ClockifyItEntityFrameworkCoreModule),
     typeof(AbpAspNetCoreSerilogModule),
-    typeof(AbpSwashbuckleModule),
+    typeof(ClockifyItDomainModule),
     typeof(ClockifyItRedmineIntegrationModule),
     typeof(ClockifyItRedmineOverDevOpsIntegrationModule)
 )]
@@ -45,19 +36,16 @@ public class ClockifyItHttpApiHostModule : AbpModule
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         var configuration = context.Services.GetConfiguration();
-        var hostingEnvironment = context.Services.GetHostingEnvironment();
 
-        ConfigureConventionalControllers();
         ConfigureAuthentication(context, configuration);
         ConfigureLocalization();
-        ConfigureCache(configuration);
+        ConfigureCache();
         ConfigureVirtualFileSystem(context);
-        ConfigureDataProtection(context, configuration, hostingEnvironment);
+        ConfigureDataProtection(context, configuration);
         ConfigureCors(context, configuration);
-        ConfigureSwaggerServices(context, configuration);
     }
 
-    private void ConfigureCache(IConfiguration configuration)
+    private void ConfigureCache()
     {
         Configure<AbpDistributedCacheOptions>(options => { options.KeyPrefix = "ClockifyIt:"; });
     }
@@ -76,22 +64,14 @@ public class ClockifyItHttpApiHostModule : AbpModule
                 options.FileSets.ReplaceEmbeddedByPhysical<ClockifyItDomainModule>(
                     Path.Combine(hostingEnvironment.ContentRootPath,
                         $"..{Path.DirectorySeparatorChar}Sg.ClockifyIt.Domain"));
-                options.FileSets.ReplaceEmbeddedByPhysical<ClockifyItApplicationContractsModule>(
-                    Path.Combine(hostingEnvironment.ContentRootPath,
-                        $"..{Path.DirectorySeparatorChar}Sg.ClockifyIt.Application.Contracts"));
-                options.FileSets.ReplaceEmbeddedByPhysical<ClockifyItApplicationModule>(
-                    Path.Combine(hostingEnvironment.ContentRootPath,
-                        $"..{Path.DirectorySeparatorChar}Sg.ClockifyIt.Application"));
+                //options.FileSets.ReplaceEmbeddedByPhysical<ClockifyItApplicationContractsModule>(
+                //    Path.Combine(hostingEnvironment.ContentRootPath,
+                //        $"..{Path.DirectorySeparatorChar}Sg.ClockifyIt.Application.Contracts"));
+                //options.FileSets.ReplaceEmbeddedByPhysical<ClockifyItApplicationModule>(
+                //    Path.Combine(hostingEnvironment.ContentRootPath,
+                //        $"..{Path.DirectorySeparatorChar}Sg.ClockifyIt.Application"));
             });
         }
-    }
-
-    private void ConfigureConventionalControllers()
-    {
-        Configure<AbpAspNetCoreMvcOptions>(options =>
-        {
-            options.ConventionalControllers.Create(typeof(ClockifyItApplicationModule).Assembly);
-        });
     }
 
     private void ConfigureAuthentication(ServiceConfigurationContext context, IConfiguration configuration)
@@ -102,22 +82,6 @@ public class ClockifyItHttpApiHostModule : AbpModule
                 options.Authority = configuration["AuthServer:Authority"];
                 options.RequireHttpsMetadata = Convert.ToBoolean(configuration["AuthServer:RequireHttpsMetadata"]);
                 options.Audience = "ClockifyIt";
-            });
-    }
-
-    private static void ConfigureSwaggerServices(ServiceConfigurationContext context, IConfiguration configuration)
-    {
-        context.Services.AddAbpSwaggerGenWithOAuth(
-            configuration["AuthServer:Authority"],
-            new Dictionary<string, string>
-            {
-                {"ClockifyIt", "ClockifyIt API"}
-            },
-            options =>
-            {
-                options.SwaggerDoc("v1", new OpenApiInfo { Title = "ClockifyIt API", Version = "v1" });
-                options.DocInclusionPredicate((docName, description) => true);
-                options.CustomSchemaIds(type => type.FullName);
             });
     }
 
@@ -132,8 +96,7 @@ public class ClockifyItHttpApiHostModule : AbpModule
 
     private void ConfigureDataProtection(
         ServiceConfigurationContext context,
-        IConfiguration configuration,
-        IWebHostEnvironment hostingEnvironment)
+        IConfiguration configuration)
     {
         var dataProtectionBuilder = context.Services.AddDataProtection().SetApplicationName("ClockifyIt");
         var isRedisEnabled = configuration["Redis:IsEnabled"].IsNullOrEmpty() || bool.Parse(configuration["Redis:IsEnabled"]);
@@ -188,24 +151,6 @@ public class ClockifyItHttpApiHostModule : AbpModule
         app.UseRouting();
         app.UseCors();
         app.UseAuthentication();
-
-        if (MultiTenancyConsts.IsEnabled)
-        {
-            app.UseMultiTenancy();
-        }
-
-        app.UseAuthorization();
-
-        app.UseSwagger();
-        app.UseAbpSwaggerUI(options =>
-        {
-            options.SwaggerEndpoint("/swagger/v1/swagger.json", "ClockifyIt API");
-
-            var configuration = context.GetConfiguration();
-            options.OAuthClientId(configuration["AuthServer:SwaggerClientId"]);
-            options.OAuthClientSecret(configuration["AuthServer:SwaggerClientSecret"]);
-            options.OAuthScopes("ClockifyIt");
-        });
 
         app.UseAuditing();
         app.UseAbpSerilogEnrichers();
