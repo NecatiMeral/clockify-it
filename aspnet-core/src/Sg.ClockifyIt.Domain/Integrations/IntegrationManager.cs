@@ -59,7 +59,10 @@ namespace Sg.ClockifyIt.Integrations
 
         protected virtual IConfiguration GetIntegrationConfiguration(string integrationName)
         {
-            return Configuration.GetSection("Integrations").GetSection(integrationName);
+            return Configuration
+                ?.GetSection(ClockifyConfigurationConsts.ClockifyConfigurationSectionName)
+                ?.GetSection(ClockifyConfigurationConsts.IntegrationsConfigurationSectionName)
+                ?.GetSection(integrationName);
         }
 
         protected virtual Type GetIntegrationType(string name)
