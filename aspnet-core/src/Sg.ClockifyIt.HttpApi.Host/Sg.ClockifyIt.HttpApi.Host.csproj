@@ -15,11 +15,9 @@
     <PackageReference Include="Serilog.Extensions.Hosting" Version="4.2.0" />
     <PackageReference Include="Serilog.Settings.Configuration" Version="3.3.0" />
     
-    <PackageReference Include="Volo.Abp.AspNetCore.Mvc.UI.MultiTenancy" Version="$(AbpPackageVersion)" />
     <PackageReference Include="Volo.Abp.Autofac" Version="$(AbpPackageVersion)" />
     <PackageReference Include="Volo.Abp.Caching.StackExchangeRedis" Version="$(AbpPackageVersion)" />
     <PackageReference Include="Volo.Abp.AspNetCore.Serilog" Version="$(AbpPackageVersion)" />
-    <PackageReference Include="Volo.Abp.Swashbuckle" Version="$(AbpPackageVersion)" />
 
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="$(MicrosoftPackageVersion)" />
     <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="$(MicrosoftPackageVersion)" />
@@ -27,9 +25,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Sg.ClockifyIt.Application\Sg.ClockifyIt.Application.csproj" />
-    <ProjectReference Include="..\Sg.ClockifyIt.EntityFrameworkCore\Sg.ClockifyIt.EntityFrameworkCore.csproj" />
-    <ProjectReference Include="..\Sg.ClockifyIt.HttpApi\Sg.ClockifyIt.HttpApi.csproj" />
+    <ProjectReference Include="..\Sg.ClockifyIt.Domain\Sg.ClockifyIt.Domain.csproj" />
+    <!-- Disable currently not required layers -->
+    <!--<ProjectReference Include="..\Sg.ClockifyIt.Application\Sg.ClockifyIt.Application.csproj" />-->
+    <!--<ProjectReference Include="..\Sg.ClockifyIt.EntityFrameworkCore\Sg.ClockifyIt.EntityFrameworkCore.csproj" />-->
+    <!--<ProjectReference Include="..\Sg.ClockifyIt.HttpApi\Sg.ClockifyIt.HttpApi.csproj" />-->
     <ProjectReference Include="..\Sg.ClockifyIt.Integration.RedmineOverDevOps\Sg.ClockifyIt.Integration.RedmineOverDevOps.csproj" />
     <ProjectReference Include="..\Sg.ClockifyIt.Integration.Redmine\Sg.ClockifyIt.Integration.Redmine.csproj" />
   </ItemGroup>
