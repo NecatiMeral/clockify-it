@@ -87,7 +87,7 @@ namespace Sg.ClockifyIt.Sync
 
         protected virtual async Task SyncWorkspaceAsync(string workspaceName, ClockifyClient client, UserInfo user, WorkspaceConfiguration configuration, string workspaceId)
         {
-            var fetchEnd = DateTimeOffset.Now.Add(-configuration.Delay);
+            var fetchEnd = DateTimeOffset.UtcNow.Add(-configuration.Delay);
             var fetchStart = fetchEnd - configuration.FetchRange;
 
             Logger.LogInformation("Fetching time entries from `{Start}` - `{End}`", fetchStart, fetchEnd);
