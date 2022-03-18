@@ -90,6 +90,7 @@ namespace Sg.ClockifyIt.Sync
             var fetchEnd = DateTimeOffset.Now.Add(-configuration.Delay);
             var fetchStart = fetchEnd - configuration.FetchRange;
 
+            Logger.LogInformation("Fetching time entries from `{Start}` - `{End}`", fetchStart, fetchEnd);
             var timeEntriesResponse = await client.FindAllHydratedTimeEntriesForUserAsync(workspaceId, user.Id, start: fetchStart, end: fetchEnd);
 
             // Filtering out any entries which don't have a defined start and end stamp and which are inside the delay interval
