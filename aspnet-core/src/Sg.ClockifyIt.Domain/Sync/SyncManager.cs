@@ -87,14 +87,14 @@ namespace Sg.ClockifyIt.Sync
 
         protected virtual async Task SyncWorkspaceAsync(string workspaceName, ClockifyClient client, UserInfo user, WorkspaceConfiguration configuration, string workspaceId)
         {
-            var fetchEnd = DateTimeOffset.UtcNow.Add(-configuration.Delay);
+            var fetchEnd = DateTimeOffset.Now.Add(-configuration.Delay);
             var fetchStart = fetchEnd - configuration.FetchRange;
 
             Logger.LogInformation("Fetching time entries from `{Start}` - `{End}`", fetchStart, fetchEnd);
             var timeEntriesResponse = await client.FindAllHydratedTimeEntriesForUserAsync(workspaceId, user.Id, start: fetchStart, end: fetchEnd);
 
             // Filtering out any entries which don't have a defined start and end stamp and which are inside the delay interval
-            var timeEntries = timeEntriesResponse.Data.Where(x => !x.TimeInterval.Duration.IsNullOrEmpty() && x.TimeInterval.End < fetchEnd).ToList();
+            var timeEntries = timeEntriesResponse.Data.Where(x => x.TimeInterval.End.HasValue && x.TimeInterval.End < fetchEnd).ToList();
             if (timeEntries.Count == 0)
             {
                 Logger.LogInformation("Nothing to do");
@@ -116,7 +116,7 @@ namespace Sg.ClockifyIt.Sync
             }
 
             await PostProcessTimeEntriesAsync(client, user, processedTimeEntries, workspaceId);
-            await MarkTimeEntriesAsBilledAsync(client, user, processedTimeEntries, workspaceId);
+            await PersistTimeEntriesAsync(client, user, processedTimeEntries, workspaceId);
         }
 
         protected virtual async Task PostProcessTimeEntriesAsync(ClockifyClient client, UserInfo user, List<TimeEntryDto> timeEntries, string workspaceId)
@@ -144,7 +144,7 @@ namespace Sg.ClockifyIt.Sync
             }
         }
 
-        protected virtual async Task MarkTimeEntriesAsBilledAsync(ClockifyClient client, UserInfo user, List<TimeEntryDto> timeEntries, string workspaceId)
+        protected virtual async Task PersistTimeEntriesAsync(ClockifyClient client, UserInfo user, List<TimeEntryDto> timeEntries, string workspaceId)
         {
             foreach (var timeEntry in timeEntries)
             {
