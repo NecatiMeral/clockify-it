@@ -45,11 +45,22 @@ namespace Sg.ClockifyIt.Sync.Users
                 Email = user.Data.Email
             };
 
-            userInfo.WorkspaceIds.AddRange(
-                user.Data.Memberships
-                    .Where(x => x.MembershipType == "WORKSPACE" && x.MembershipStatus == MembershipStatus.Active)
-                    .Select(x => x.TargetId)
-            );
+            // NM@24.05.2022: The API returns a empty memberships collection since a unkown date
+            if (user.Data.Memberships != null && user.Data.Memberships.Any())
+            {
+                userInfo.WorkspaceIds.AddRange(
+                    user.Data.Memberships
+                        .Where(x => x.MembershipType == "WORKSPACE" && x.MembershipStatus == MembershipStatus.Active)
+                        .Select(x => x.TargetId)
+                );
+            }
+            else
+            {
+                var workspaces = await client.GetWorkspacesAsync();
+                var workspaceIds = workspaces.Data.Select(x => x.Id);
+
+                userInfo.WorkspaceIds.AddRange(workspaceIds);
+            }
             return userInfo;
         }
     }
